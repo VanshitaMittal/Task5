@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: graf-pvc
+  labels:
+    name: graf-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+      requests:
+          storage: 2Gi
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prom-pvc
+  labels:
+    name: prom-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+      requests:
+          storage: 2Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: promgrafdeploy
+spec:
+  selector:
+    matchLabels:
+      pod: task5pod
+  strategy:
+    type: Recreate
+  replicas: 1
+  template:
+    metadata:
+          labels:
+             pod: task5pod
+    spec:
+      containers:
+      - name: prometheus
+        image: prom/prometheus 
+        
+        ports:
+        - containerPort: 9090
+        
+        volumeMounts:
+          - name: promvol
+            mountPath: /prometheus 
+
+      - name: grafana
+        image: grafana/grafana:latest 
+        
+        ports:
+        - containerPort: 3000
+        
+        volumeMounts:
+          - name: grafvol
+            mountPath: /var/lib/grafana 
+       
+      volumes:
+      - name: promvol
+        persistentVolumeClaim:
+            claimName: prom-pvc
+
+      - name: grafvol
+        persistentVolumeClaim:
+            claimName: graf-pvc
+ 
